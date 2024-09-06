@@ -177,7 +177,7 @@ final_df.loc[mask, ['EXW', 'EXL']] = final_df.loc[mask, ['EXL', 'EXW']].values
 final_df.loc[mask, ['LBW','LBL']] = final_df.loc[mask, ['LBL','LBW']].values
 final_df.loc[mask, ['SJW', 'SJL']] = final_df.loc[mask, ['SJL', 'SJW']].values
 # Delete all the odds columns
-odds_columns = ['PSW', 'PSL', 'EXW', 'EXL', 'LBW', 'LBL', 'SJW', 'SJL']
+odds_columns = ['PSW', 'PSL', 'EXW', 'EXL', 'LBW', 'LBL', 'SJW', 'SJL', 'MaxW', 'MaxL']
 final_df = final_df.drop(columns=odds_columns)
 
 
@@ -215,6 +215,13 @@ final_df.loc[(favorite_is_winner) & (final_df['AvgW'] > 2), 'Info'] = final_df['
 
 # Set Info for cases where the loser is the favorite
 final_df.loc[(~favorite_is_winner) & (final_df['AvgL'] > 2), 'Info'] = final_df['AvgL']
+# Subtract 2013 from every value in the 'Date' column
+final_df['Date'] = final_df['Date'] - 2013
+
+# Ensure the 'Date' column remains as integer type
+final_df['Date'] = final_df['Date'].astype(int)
+
+
 
 
 
@@ -225,7 +232,9 @@ if __name__ == "__main__":
     print("\nInfo of final_df:")
     print(final_df.info())
     print("Data collated successfully.")
+    print(final_df.describe().transpose())
         # ... other print statements ...
+    
 else:
     import numpy as np
     from sklearn.model_selection import train_test_split
