@@ -29,6 +29,7 @@ for file_name in os.listdir(folder_path):
 # Concatenate all DataFrames into a single DataFrame
 final_df = pd.concat(dataframes, ignore_index=True)
 # One-hot encode the 'Surface' column
+
 surface_dummies = pd.get_dummies(final_df['Surface'], prefix='Surface')
 final_df = pd.concat([final_df, surface_dummies], axis=1)
 
@@ -236,15 +237,29 @@ if __name__ == "__main__":
         # ... other print statements ...
     
 else:
+    # Split the data into train, test, and validation sets
     import numpy as np
-    from sklearn.model_selection import train_test_split
 
-    # First, split the data into train+validation and test sets (85% and 15%)
-    train_val, test = train_test_split(final_df, test_size=0.15, random_state=42)
+    # Create a mask for 2024 data
+    mask_2024 = final_df['Date'] == 11  # 2024 - 2013 = 11
 
-    # Then split the train+validation set into train and validation sets (88.24% and 11.76%)
-    # This results in a 75% train, 10% validation, and 15% test split of the original data
-    train, val = train_test_split(train_val, test_size=0.1176, random_state=42)
+    # Get 50% of 2024 data for validation
+    val = final_df[mask_2024].sample(frac=0.2, random_state=42)
+
+    # Remove validation data from the main dataset
+    remaining_data = final_df[~final_df.index.isin(val.index)]
+
+    # Split remaining data into train and test sets
+    train_test_split = np.random.rand(len(remaining_data)) < 0.8
+    train = remaining_data[train_test_split]
+    test = remaining_data[~train_test_split]
+
+    print(f"Train set shape: {train.shape}")
+    print(f"Test set shape: {test.shape}")
+    print(f"Validation set shape: {val.shape}")
+
+    # Make these datasets available for import
+    __all__ = ['train', 'test', 'val', 'final_df']
 
 
 

@@ -4,7 +4,8 @@ from sklearn.ensemble import RandomForestClassifier
 from sklearn.metrics import accuracy_score, classification_report
 import pandas as pd
 # Define features and target
-features = ['WRank', 'LRank', 'WPts', 'LPts', 'Pointsdiff', 'B365W', 'B365L', 'AvgW', 'AvgL', 'Series_encoded', 'Round_encoded', 'Best of', 'Surface_Clay', 'Surface_Grass', 'Surface_Hard', 'Court_Indoor', 'Court_Outdoor', 'Date', 'Info']
+features = ['AvgL', 'AvgW', 'Pointsdiff', 'LPts', 'WPts', 'LRank', 'WRank', 'B365L', 'B365W', 'Date', 'Round_encoded', 'Series_encoded', 'Info', 'Surface_Hard', 'Surface_Clay']
+
 target = 'Win'
 
 # Prepare the data
@@ -32,7 +33,7 @@ print(classification_report(y_test, y_pred))
 feature_importance = pd.DataFrame({'feature': features, 'importance': rf_model.feature_importances_})
 feature_importance = feature_importance.sort_values('importance', ascending=False)
 print("\nTop 10 Most Important Features:")
-print(feature_importance.head(10))
+print(feature_importance)
 
 # Calculate return based on model predictions
 def calculate_return(X, y_true, odds_w, odds_l):
@@ -91,3 +92,46 @@ print(f"Total return: ${val_return['total_return']:.2f}")
 print(f"Net return: ${val_return['net_return']:.2f}")
 print(f"ROI: {val_return['roi']:.2f}%")
 print(f"Prediction Accuracy: {val_return['accuracy']:.2f}%")
+
+
+# Get the last 50 rows of the validation set
+last_50_val = X_val.tail(50)
+last_50_y_val = y_val.tail(50)
+last_50_odds_w = val['B365W'].tail(50)
+last_50_odds_l = val['B365L'].tail(50)
+
+# Get predictions for the last 50 rows
+last_50_predictions = rf_model.predict(last_50_val)
+
+# Calculate returns for the last 50 rows
+last_50_returns = []
+for pred, true, odd_w, odd_l in zip(last_50_predictions, last_50_y_val, last_50_odds_w, last_50_odds_l):
+    if pred == 1:  # Model predicts a win
+        bet = "Win"
+        if true == 1:
+            return_value = odd_w - 1
+        else:
+            return_value = -1
+    else:  # Model predicts a loss
+        bet = "Loss"
+        if true == 0:
+            return_value = odd_l - 1
+        else:
+            return_value = -1
+    last_50_returns.append(return_value)
+
+# Create a DataFrame with the results
+results_df = pd.DataFrame({
+    'True Outcome': last_50_y_val,
+    'Predicted Outcome': last_50_predictions,
+    'Bet': ['Win' if pred == 1 else 'Loss' for pred in last_50_predictions],
+    'Return': last_50_returns
+})
+
+# Print the results
+print("\nLast 50 rows of validation set with predictions and returns:")
+print(results_df)
+
+# Calculate and print total return for these 50 bets
+total_return = results_df['Return'].sum()
+print(f"\nTotal return for last 50 bets: ${total_return:.2f}")
