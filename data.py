@@ -3,7 +3,16 @@ import os
 import numpy as np
 import math
 pd.options.mode.chained_assignment = None
+'''Sports prediction and betting models in the
+machine learning age: The case of tennis
 
+Tennis Betting Strategies based on Neural Networks
+
+
+Neural Networks and Betting Strategies for Tennis
+
+Tennis betting:
+can statistics beat bookmakers?'''
 # Directory containing the .xlsx files
 folder_path = '/Users/thevedantsingh/Desktop/Tennis'
 
@@ -218,6 +227,7 @@ final_df.loc[(favorite_is_winner) & (final_df['AvgW'] > 2), 'Info'] = final_df['
 final_df.loc[(~favorite_is_winner) & (final_df['AvgL'] > 2), 'Info'] = final_df['AvgL']
 # Subtract 2013 from every value in the 'Date' column
 final_df['Date'] = final_df['Date'] - 2013
+
 
 # Ensure the 'Date' column remains as integer type
 final_df['Date'] = final_df['Date'].astype(int)

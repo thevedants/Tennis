@@ -132,6 +132,39 @@ results_df = pd.DataFrame({
 print("\nLast 50 rows of validation set with predictions and returns:")
 print(results_df)
 
-# Calculate and print total return for these 50 bets
-total_return = results_df['Return'].sum()
-print(f"\nTotal return for last 50 bets: ${total_return:.2f}")
+
+# Save the trained model
+import joblib
+
+# Save the model
+joblib.dump(rf_model, 'rf_model.joblib')
+
+# Create a class to encapsulate the model and prediction logic
+class RandomForestModel:
+    def __init__(self):
+        self.model = joblib.load('rf_model.joblib')
+        
+    def predict(self, features):
+        # Make sure features are in the correct format
+        if isinstance(features, pd.DataFrame):
+            # Ensure the DataFrame has the correct columns
+            required_columns = X_val.columns.tolist()
+            for col in required_columns:
+                if col not in features.columns:
+                    features[col] = 0  # Add missing columns with default value
+            
+            # Reorder columns to match training data
+            features = features[required_columns]
+        else:
+            raise ValueError("Input must be a pandas DataFrame")
+        
+        # Make prediction
+        prediction = self.model.predict(features)
+        
+        # Convert prediction to a more interpretable format
+        return "Win" if prediction[0] == 1 else "Loss"
+
+print("Model saved and RandomForestModel class created for web application use.")
+
+
+

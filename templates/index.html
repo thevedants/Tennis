@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tennis Match Prediction</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #e8f5e9;
+            color: #333;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        h1 {
+            color: #1b5e20;
+            text-align: center;
+            border-bottom: 2px solid #4caf50;
+            padding-bottom: 10px;
+        }
+        form {
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            color: #1b5e20;
+        }
+        input[type="text"] {
+            width: 100%;
+            padding: 8px;
+            margin-bottom: 15px;
+            border: 1px solid #4caf50;
+            border-radius: 4px;
+        }
+        input[type="submit"] {
+            background-color: #4caf50;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        input[type="submit"]:hover {
+            background-color: #45a049;
+        }
+        .tennis-ball {
+            width: 50px;
+            height: 50px;
+            background-color: #ccff90;
+            border-radius: 50%;
+            margin: 20px auto;
+            box-shadow: inset -5px -5px 0 #a5d6a7;
+        }
+    </style>
+</head>
+<body>
+    <div class="tennis-ball"></div>
+    <h1>🎾 Tennis Match Prediction 🎾</h1>
+    <form method="POST" action="{{ url_for('predict') }}">
+        <label for="player1">Player 1:</label>
+        <input type="text" id="player1" name="player1" required placeholder="e.g., Roger Federer">
+
+        <label for="player2">Player 2 (optional):</label>
+        <input type="text" id="player2" name="player2" placeholder="e.g., Rafael Nadal">
+
+        <label for="tournament">Tournament (optional):</label>
+        <input type="text" id="tournament" name="tournament" placeholder="e.g., Wimbledon">
+
+        <input type="submit" value="Predict Match">
+    </form>
+    <p style="text-align: center; margin-top: 20px;">
+        <a href="https://www.tennisexplorer.com/matches/" target="_blank">View Today's Matches</a>
+    </p>
+</body>
+</html>
+
+
