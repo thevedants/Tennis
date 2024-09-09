@@ -64,15 +64,60 @@
     <h1>🎾 Tennis Match Prediction 🎾</h1>
     <form method="POST" action="{{ url_for('predict') }}">
         <label for="player1">Player 1:</label>
-        <input type="text" id="player1" name="player1" required placeholder="e.g., Roger Federer">
+        <input type="text" id="player1" name="player1" required><br>
 
-        <label for="player2">Player 2 (optional):</label>
-        <input type="text" id="player2" name="player2" placeholder="e.g., Rafael Nadal">
+        <label for="player2">Player 2:</label>
+        <input type="text" id="player2" name="player2" required><br>
 
-        <label for="tournament">Tournament (optional):</label>
-        <input type="text" id="tournament" name="tournament" placeholder="e.g., Wimbledon">
+        <label for="rank1">Rank 1:</label>
+        <input type="number" id="rank1" name="rank1" required><br>
 
-        <input type="submit" value="Predict Match">
+        <label for="rank2">Rank 2:</label>
+        <input type="number" id="rank2" name="rank2" required><br>
+
+        <label for="points1">Points 1:</label>
+        <input type="number" id="points1" name="points1" required><br>
+
+        <label for="points2">Points 2:</label>
+        <input type="number" id="points2" name="points2" required><br>
+
+        <label for="year">Year:</label>
+        <input type="number" id="year" name="year" required><br>
+
+        <label for="Avgodds1">Average Odds 1:</label>
+        <input type="number" id="Avgodds1" name="Avgodds1" step="0.01" required><br>
+
+        <label for="Avgodds2">Average Odds 2:</label>
+        <input type="number" id="Avgodds2" name="Avgodds2" step="0.01" required><br>
+
+        <label for="bestodds1">Best Odds 1:</label>
+        <input type="number" id="bestodds1" name="bestodds1" step="0.01" required><br>
+
+        <label for="bestodds2">Best Odds 2:</label>
+        <input type="number" id="bestodds2" name="bestodds2" step="0.01" required><br>
+
+        <label for="series">Series:</label>
+        <select id="series" name="series" required>
+            <option value="">Select Series</option>
+            <option value="2000">Grand Slam</option>
+            <option value="1000">ATP 1000</option>
+            <option value="500">ATP 500</option>
+            <option value="250">ATP 250</option>
+        </select><br>
+
+        <label for="round">Round:</label>
+        <select id="round" name="round" required>
+            <option value="">Select Round</option>
+            <option value="6">Final</option>
+            <option value="5">Semi-Final</option>
+            <option value="4">Quarter-Final</option>
+            <option value="3">Round of 16</option>
+            <option value="2">Round of 32</option>
+            <option value="1">Round of 64</option>
+            <option value="0">Round of 128</option>
+        </select><br>
+
+        <input type="submit" value="Predict">
     </form>
     <p style="text-align: center; margin-top: 20px;">
         <a href="https://www.tennisexplorer.com/matches/" target="_blank">View Today's Matches</a>

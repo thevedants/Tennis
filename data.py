@@ -2,6 +2,7 @@ import pandas as pd
 import os
 import numpy as np
 import math
+import joblib
 pd.options.mode.chained_assignment = None
 '''Sports prediction and betting models in the
 machine learning age: The case of tennis
@@ -209,7 +210,7 @@ columns_to_scale = ['WPts', 'LPts', 'Pointsdiff']
 # Apply MinMaxScaler to the specified columns for train, validation, and test sets
 
 final_df[columns_to_scale] = scaler.fit_transform(final_df[columns_to_scale])
-
+joblib.dump(scaler, 'min_max_scaler.pkl')
 # Normalize Series_encoded by dividing by 250
 
 final_df['Series_encoded'] = final_df['Series_encoded'] / 250

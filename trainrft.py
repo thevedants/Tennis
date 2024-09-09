@@ -4,7 +4,7 @@ from sklearn.ensemble import RandomForestClassifier
 from sklearn.metrics import accuracy_score, classification_report
 import pandas as pd
 # Define features and target
-features = ['AvgL', 'AvgW', 'Pointsdiff', 'LPts', 'WPts', 'LRank', 'WRank', 'B365L', 'B365W', 'Date', 'Round_encoded', 'Series_encoded', 'Info', 'Surface_Hard', 'Surface_Clay']
+features = ['AvgL', 'AvgW', 'Pointsdiff', 'LPts', 'WPts', 'LRank', 'WRank', 'B365L', 'B365W', 'Date', 'Round_encoded', 'Series_encoded']
 
 target = 'Win'
 
