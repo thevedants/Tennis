@@ -7,7 +7,7 @@ from sklearn.preprocessing import StandardScaler
 import numpy as np
 
 # Define features and target
-features = ['WRank', 'LRank', 'WPts', 'LPts', 'Pointsdiff', 'B365W', 'B365L', 'AvgW', 'AvgL', 'Series_encoded', 'Round_encoded', 'Best of', 'Surface_Clay', 'Surface_Grass', 'Surface_Hard', 'Court_Indoor', 'Court_Outdoor', 'Date', 'Info']
+features = ['WRank', 'LRank', 'WPts', 'LPts', 'Pointsdiff', 'AvgW', 'AvgL', 'Series_encoded', 'Round_encoded', 'Best of', 'Surface_Clay', 'Surface_Grass', 'Surface_Hard', 'Court_Indoor', 'Court_Outdoor', 'Date', 'Info']
 target = 'Win'
 
 # Prepare the data
@@ -206,11 +206,10 @@ def calculate_return(outputs, y_true, odds, avg_odds, threshold=0.7, avg_odds_th
 
 # Get the necessary data from the test set
 test_outputs_np = test_outputs.squeeze().numpy()
-test_odds = test['B365W'].values
 test_avg_odds = test['AvgW'].values
 
 # Calculate return for test set
-test_return = calculate_return(test_outputs_np, y_test_np, test_odds, test_avg_odds)
+test_return = calculate_return(test_outputs_np, y_test_np, test_avg_odds)
 
 print("\nBetting Results on Test Set (prob > 0.7 and AvgW > 1.7):")
 print(f"Total bets: {test_return['total_bets']}")
@@ -225,10 +224,9 @@ with torch.no_grad():
     val_outputs = model(X_val_tensor)
 val_outputs_np = val_outputs.squeeze().numpy()
 val_y_np = val[target].values
-val_odds = val['B365W'].values
 val_avg_odds = val['AvgW'].values
 
-val_return = calculate_return(val_outputs_np, val_y_np, val_odds, val_avg_odds)
+val_return = calculate_return(val_outputs_np, val_y_np, val_avg_odds)
 
 print("\nBetting Results on Validation Set (prob > 0.7 and AvgW > 1.7):")
 print(f"Total bets: {val_return['total_bets']}")

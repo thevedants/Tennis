@@ -1,1 +1,4 @@
 rf_model.joblib
+__pycache__/
+*.DS_Store
+combined_data.xlsx

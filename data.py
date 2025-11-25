@@ -28,7 +28,7 @@ for file_name in os.listdir(folder_path):
         
         # Read the Excel file into a DataFrame
         file_path = os.path.join(folder_path, file_name)
-        df = pd.read_excel(file_path)
+        df = pd.read_excel(file_path, engine='openpyxl')
         
         # Add a column for the year
         df['Year'] = year
@@ -129,12 +129,12 @@ columns_to_drop = ['Wsets', 'Lsets']
 final_df = final_df.drop(columns=columns_to_drop)
 
 # Fill other odds columns with AvgW and AvgL if they have null values
-odds_columns = ['B365W', 'B365L', 'PSW', 'PSL', 'EXW', 'EXL', 'LBW', 'LBL', 'SJW','SJL']
+odds_columns = ['PSW', 'PSL', 'EXW', 'EXL', 'LBW', 'LBL', 'SJW','SJL']
 for col in odds_columns:
     if col.endswith('W'):
-        final_df[col].fillna(final_df['AvgW'], inplace=True)
+        final_df[col] = final_df[col].fillna(final_df['AvgW'])
     elif col.endswith('L'):
-        final_df[col].fillna(final_df['AvgL'], inplace=True)
+        final_df[col] = final_df[col].fillna(final_df['AvgL'])
 
 
 
@@ -147,7 +147,7 @@ final_df = final_df.dropna(subset=['AvgW'])
 final_df = final_df.dropna(subset=['WRank', 'LRank'])
 
 # Fill 'Best of' column with 3 where null
-final_df['Best of'].fillna(3, inplace=True)
+final_df['Best of'] = final_df['Best of'].fillna(3)
 
 
 
@@ -180,7 +180,6 @@ mask = final_df['Winner_ID'] > final_df['Loser_ID']
 final_df.loc[mask, ['WPts', 'LPts']] = final_df.loc[mask, ['LPts', 'WPts']].values
 final_df.loc[mask, ['WRank', 'LRank']] = final_df.loc[mask, ['LRank', 'WRank']].values
 final_df.loc[mask, ['Winner_ID', 'Loser_ID']] = final_df.loc[mask, ['Loser_ID', 'Winner_ID']].values
-final_df.loc[mask, ['B365W', 'B365L']] = final_df.loc[mask, ['B365L', 'B365W']].values
 final_df.loc[mask, ['PSW', 'PSL']] = final_df.loc[mask, ['PSL', 'PSW']].values
 final_df.loc[mask, ['MaxW', 'MaxL']] = final_df.loc[mask, ['MaxL', 'MaxW']].values
 final_df.loc[mask, ['AvgW', 'AvgL']] = final_df.loc[mask, ['AvgL', 'AvgW']].values
@@ -188,14 +187,14 @@ final_df.loc[mask, ['EXW', 'EXL']] = final_df.loc[mask, ['EXL', 'EXW']].values
 final_df.loc[mask, ['LBW','LBL']] = final_df.loc[mask, ['LBL','LBW']].values
 final_df.loc[mask, ['SJW', 'SJL']] = final_df.loc[mask, ['SJL', 'SJW']].values
 # Delete all the odds columns
-odds_columns = ['PSW', 'PSL', 'EXW', 'EXL', 'LBW', 'LBL', 'SJW', 'SJL', 'MaxW', 'MaxL']
+odds_columns = ['B365W', 'B365L', 'PSW', 'PSL', 'EXW', 'EXL', 'LBW', 'LBL', 'SJW', 'SJL']
 final_df = final_df.drop(columns=odds_columns)
 
 
 final_df["Pointsdiff"] = (final_df["WPts"] - final_df["LPts"])
-final_df['WPts'].fillna(final_df['WPts'].mean(), inplace=True)
-final_df['LPts'].fillna(final_df['LPts'].mean(), inplace=True)
-final_df['Pointsdiff'].fillna(final_df['Pointsdiff'].mean(), inplace=True)
+final_df['WPts'] = final_df['WPts'].fillna(final_df['WPts'].mean())
+final_df['LPts'] = final_df['LPts'].fillna(final_df['LPts'].mean())
+final_df['Pointsdiff'] = final_df['Pointsdiff'].fillna(final_df['Pointsdiff'].mean())
 # Set 'Win' to 0 for the switched rows
 final_df.loc[mask, 'Win'] = 0
 
@@ -216,7 +215,7 @@ joblib.dump(scaler, 'min_max_scaler.pkl')
 final_df['Series_encoded'] = final_df['Series_encoded'] / 250
 
 # Create the Info column
-final_df['Info'] = 0
+final_df['Info'] = 0.0
 
 # Determine the favorite player based on rank
 favorite_is_winner = final_df['WRank'] < final_df['LRank']
@@ -251,23 +250,14 @@ else:
     # Split the data into train, test, and validation sets
     import numpy as np
 
-    # Create a mask for 2024 data
-    mask_2024 = final_df['Date'] == 11  # 2024 - 2013 = 11
-
-    # Get 50% of 2024 data for validation
-    val = final_df[mask_2024].sample(frac=0.2, random_state=42)
-
-    # Remove validation data from the main dataset
-    remaining_data = final_df[~final_df.index.isin(val.index)]
-
-    # Split remaining data into train and test sets
-    train_test_split = np.random.rand(len(remaining_data)) < 0.8
-    train = remaining_data[train_test_split]
-    test = remaining_data[~train_test_split]
+    # Final Evaluation: Train on 2013-2024, Test on all of 2025
+    test = final_df[final_df['Date'] == 12]
+    val = test # Set val same as test for compatibility
+    
+    train = final_df[final_df['Date'] <= 11]
 
     print(f"Train set shape: {train.shape}")
-    print(f"Test set shape: {test.shape}")
-    print(f"Validation set shape: {val.shape}")
+    print(f"Test set shape (All 2025): {test.shape}")
 
     # Make these datasets available for import
     __all__ = ['train', 'test', 'val', 'final_df']

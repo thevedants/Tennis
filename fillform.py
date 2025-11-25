@@ -1,6 +1,4 @@
-''''AvgL' -> match, 'AvgW'->match, 'Pointsdiff'->rank, 'LPts'->rank, 'WPts'->rank, 'LRank'->rank, 'WRank'->rank, 'B365L'->match, 'B365W'->match, 'Date'->match, 'Round_encoded'->match, 'Series_encoded'->match, 'Info'->match, 'Surface_Hard'->match, 'Surface_Clay->match''''
-
-
+#'''AvgL' -> match, 'AvgW'->match, 'Pointsdiff'->rank, 'LPts'->rank, 'WPts'->rank, 'LRank'->rank, 'WRank'->rank, 'B365L'->match, 'B365W'->match, 'Date'->match, 'Round_encoded'->match, 'Series_encoded'->match, 'Info'->match, 'Surface_Hard'->match, 'Surface_Clay->match'''
 from selenium import webdriver
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.common.by import By

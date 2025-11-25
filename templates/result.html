@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html>
+
 <head>
     <title>Prediction Result</title>
     <style>
@@ -10,9 +11,11 @@
             text-align: center;
             padding: 20px;
         }
+
         h1 {
             color: #2c3e50;
         }
+
         .container {
             background-color: white;
             border-radius: 8px;
@@ -21,6 +24,7 @@
             margin: 0 auto;
             box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
         }
+
         a {
             display: inline-block;
             margin-top: 20px;
@@ -30,23 +34,40 @@
             text-decoration: none;
             border-radius: 5px;
         }
+
         a:hover {
             background-color: #2980b9;
         }
-        .odds-link, .polymarket-link {
+
+        .odds-link,
+        .polymarket-link {
             display: block;
             margin-top: 10px;
         }
     </style>
 </head>
+
 <body>
     <div class="container">
         <h1>Match Prediction Result</h1>
-        <p>The predicted outcome is: {{ prediction }}</p>
+        <h2>Predicted Winner: <span style="color: #27ae60;">{{ winner }}</span></h2>
+        <p>Confidence: <strong>{{ confidence }}%</strong></p>
+
+        <div style="background-color: #e8f6f3; padding: 15px; border-radius: 5px; margin: 20px 0;">
+            <h3>Betting Advice: <span style="color: {{ 'green' if advice == 'BET' else 'red' }};">{{ advice }}</span>
+            </h3>
+            {% if advice == 'BET' %}
+            <p>Recommended Bet: <strong>${{ bet_amount }}</strong> on {{ bet_on }}</p>
+            <p>Potential Profit: <strong>${{ potential_profit }}</strong></p>
+            {% else %}
+            <p>No value found at these odds.</p>
+            {% endif %}
+        </div>
         <a href="/">Make another prediction</a>
-        
+
         <p class="odds-link">Best odds offered: <a href="{{ odds_url }}" target="_blank">Visit website</a></p>
         <p class="polymarket-link">Want to bet on Polymarket? <a href="poly.html">Click here</a></p>
     </div>
 </body>
+
 </html>
