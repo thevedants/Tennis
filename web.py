@@ -1,123 +1,168 @@
+from flask import Flask, render_template, request
 import joblib
-from trainrft import RandomForestModel
-
-# Load the saved Random Forest model
-rf_model = joblib.load('rf_model.joblib')
-
-
-from flask import Flask, render_template, request, url_for
-import requests
-from bs4 import BeautifulSoup
 import pandas as pd
-
+import numpy as np
 
 app = Flask(__name__)
 
-def scrape_features(players):
-    import requests
-    from bs4 import BeautifulSoup
+# Load Artifacts
+print("Loading model and data...")
+model = joblib.load('xgb_enhanced.joblib')
+scaler = joblib.load('enhanced_scaler.pkl')
+elo_rating = joblib.load('elo_rating.pkl')
+surface_elo = joblib.load('surface_elo.pkl')
+last_match_date = joblib.load('last_match_date.pkl')
+h2h_wins = joblib.load('h2h_wins.pkl')
+match_history = joblib.load('match_history.pkl')
 
-    # Fetch the webpage content
-    url = 'https://www.atptour.com/en/rankings/singles?rankRange=0-5000'  # Replace with the actual website URL
-    response = requests.get(url)
-    import time
+# Constants
+THRESHOLD = 0.65
+MIN_ODDS = 1.7
 
-# Wait for 5 seconds
-    time.sleep(5)
-
-# Access the HTML content
-    html_content = response.text
-
-# Print the HTML source
-    print(html_content[:10000])
-
-    # Parse the page content with BeautifulSoup
-    soup = BeautifulSoup(html_content, 'html.parser')
-
-    # Find all rows with the class "lower row"
-    lower_row_elements = soup.find_all('tr', class_='lower-row')
-
-    # Iterate through the rows and isolate the one with the desired name
-    target_name_0 = '-'.join(players[0].split()).lower()
-    target_name_1 = '-'.join(players[1].split()).lower()  # Replace with the name you're looking for
-    print(target_name_0)
-    print(target_name_1)
-    print(lower_row_elements)
-    print("length of rows = ", len(lower_row_elements))
-    for row in lower_row_elements:
-        print(row.get_text())
-        if target_name_0 in row.get_text():
-            rank1 = row.find('td', class_='rank').get_text(strip=True)
-            points1 = row.find('td', class_='points').get_text(strip=True)
-            break
-    for row in lower_row_elements:
-        if target_name_1 in row.get_text():
-            rank2 = row.find('td', class_='rank').get_text(strip=True)
-            points2 = row.find('td', class_='points').get_text(strip=True)
-            break
-    print(rank1,points1, rank2, points2)
-
-    return {'feature1': 0, 'feature2': 0}  # Replace with actual features
-
-
+def get_form(player, current_surface, n=10):
+    history = match_history.get(player, [])
+    if not history:
+        return 0.5, 0.5 # Default
+        
+    recent = history[-n:]
+    wins = sum(1 for x in recent if x[1] == 1)
+    win_pct = wins / len(recent)
+    
+    # Surface Form
+    surf_history = [x for x in history if x[2] == current_surface]
+    if not surf_history:
+        surf_win_pct = 0.5
+    else:
+        recent_surf = surf_history[-n:]
+        surf_wins = sum(1 for x in recent_surf if x[1] == 1)
+        surf_win_pct = surf_wins / len(recent_surf)
+        
+    return win_pct, surf_win_pct
 
 @app.route('/', methods=['GET', 'POST'])
 @app.route('/predict', methods=['GET', 'POST'])
 def predict():
     if request.method == 'POST':
-        player1 = request.form['player1']
-        player2 = request.form['player2']
-        rank1 = request.form['rank1']
-        rank2 = request.form['rank2']
-        points1 = request.form['points1']
-        points2 = request.form['points2']
-        year = request.form['year']
-        Avgodds1 = request.form['Avgodds1']
-        Avgodds2 = request.form['Avgodds2']
-        bestodds1 = request.form['bestodds1']
-        bestodds2 = request.form['bestodds2']
-        series = request.form['series']
-        round = request.form['round']
+        # Get Inputs
+        p1_name = request.form['player1'].strip()
+        p2_name = request.form['player2'].strip()
         
-        # Scrape features
-        print(player1, player2)
-        #scrape_features([player1, player2])
-        #features = scrape_features([player1, player2])
-        features = ['AvgL', 'AvgW', 'Pointsdiff', 'LPts', 'WPts', 'LRank', 'WRank', 'B365L', 'B365W', 'Date', 'Round_encoded', 'Series_encoded', 'Info', 'Surface_Hard', 'Surface_Clay']
-        # Create a DataFrame with one row and features as columns
-        df = pd.DataFrame({
-            'AvgL': [float(Avgodds2)],
-            'AvgW': [float(Avgodds1)],
-            'Pointsdiff': [float(points1) - float(points2)],
-            'LPts': [float(points2)],
-            'WPts': [float(points1)],
-            'LRank': [float(rank2)],
-            'WRank': [float(rank1)],
-            'B365L': [float(bestodds2)],
-            'B365W': [float(bestodds1)],
-            'Date': [int(year) - 2013],
-            'Round_encoded': [float(round)],
-            'Series_encoded': [float(series) / 250],
-            'Info': [0]
-        })
-
-        # Load the MinMaxScaler
-        scaler = joblib.load('min_max_scaler.pkl')
-
-        # Apply scaling to relevant columns
-        columns_to_scale = ['WPts', 'LPts', 'Pointsdiff']
-        df[columns_to_scale] = scaler.transform(df[columns_to_scale])
-
-        # Convert DataFrame to a list of features
-        features = df.iloc[0].tolist()
-        # Load the model
-        print(features)
-        model = RandomForestModel()  # Adjust based on your actual model structure
+        surface = request.form['surface']
+        court = request.form['court']
+        best_of = int(request.form['best_of'])
         
-        # Make prediction
-        prediction = model.predict(pd.DataFrame([features]))
+        p1_rank = int(request.form['rank1'])
+        p2_rank = int(request.form['rank2'])
         
-        return render_template('result.html', prediction=prediction)
+        p1_pts = int(request.form['points1'])
+        p2_pts = int(request.form['points2'])
+        
+        p1_odds = float(request.form['Avgodds1'])
+        p2_odds = float(request.form['Avgodds2'])
+        
+        round_num = int(request.form['round'])
+        series_val = int(request.form['series'])
+        
+        # --- Feature Engineering ---
+        
+        # Elo
+        p1_elo = elo_rating.get(p1_name, 1500)
+        p2_elo = elo_rating.get(p2_name, 1500)
+        
+        p1_surf_elo = surface_elo.get(surface, {}).get(p1_name, 1500)
+        p2_surf_elo = surface_elo.get(surface, {}).get(p2_name, 1500)
+        
+        # Fatigue
+        today = pd.Timestamp.now()
+        p1_last = last_match_date.get(p1_name, today - pd.Timedelta(days=30))
+        p2_last = last_match_date.get(p2_name, today - pd.Timedelta(days=30))
+        
+        p1_days = (today - p1_last).days
+        p2_days = (today - p2_last).days
+        
+        # H2H
+        p1_h2h = h2h_wins.get(p1_name, {}).get(p2_name, 0)
+        p2_h2h = h2h_wins.get(p2_name, {}).get(p1_name, 0)
+        
+        # Form
+        p1_form, p1_surf_form = get_form(p1_name, surface)
+        p2_form, p2_surf_form = get_form(p2_name, surface)
+        
+        # Diffs
+        elo_diff = p1_elo - p2_elo
+        surf_elo_diff = p1_surf_elo - p2_surf_elo
+        rank_diff = p2_rank - p1_rank
+        h2h_diff = p1_h2h - p2_h2h
+        form_diff = p1_form - p2_form
+        surf_form_diff = p1_surf_form - p2_surf_form
+        
+        # Create DataFrame
+        data = {
+            'P1_Elo': [p1_elo], 'P2_Elo': [p2_elo],
+            'P1_Surface_Elo': [p1_surf_elo], 'P2_Surface_Elo': [p2_surf_elo],
+            'Elo_Diff': [elo_diff], 'Surface_Elo_Diff': [surf_elo_diff],
+            'P1_Days_Since': [p1_days], 'P2_Days_Since': [p2_days],
+            'Rank_Diff': [rank_diff], 'P1_Rank': [p1_rank], 'P2_Rank': [p2_rank],
+            'P1_Pts': [p1_pts], 'P2_Pts': [p2_pts],
+            'P1_H2H': [p1_h2h], 'P2_H2H': [p2_h2h], 'H2H_Diff': [h2h_diff],
+            'P1_Last10': [p1_form], 'P2_Last10': [p2_form], 'Form_Diff': [form_diff],
+            'P1_Last10_Surf': [p1_surf_form], 'P2_Last10_Surf': [p2_surf_form], 'Surf_Form_Diff': [surf_form_diff],
+            'Surface_Clay': [1 if surface == 'Clay' else 0],
+            'Surface_Grass': [1 if surface == 'Grass' else 0],
+            'Surface_Hard': [1 if surface == 'Hard' else 0],
+            'Court_Indoor': [1 if court == 'Indoor' else 0],
+            'Court_Outdoor': [1 if court == 'Outdoor' else 0],
+            'Best of': [best_of],
+            'Round_encoded': [round_num],
+            'Series_encoded': [series_val / 250.0]
+        }
+        
+        df = pd.DataFrame(data)
+        
+        # Scale
+        scale_cols = [
+            'P1_Pts', 'P2_Pts', 'P1_Elo', 'P2_Elo', 'P1_Surface_Elo', 'P2_Surface_Elo', 
+            'Elo_Diff', 'Surface_Elo_Diff', 'H2H_Diff', 'Form_Diff', 'Surf_Form_Diff',
+            'P1_H2H', 'P2_H2H', 'P1_Last10', 'P2_Last10'
+        ]
+        df[scale_cols] = scaler.transform(df[scale_cols])
+        
+        # Predict
+        probs = model.predict_proba(df)[0]
+        p_loss = probs[0] # P2 Wins
+        p_win = probs[1]  # P1 Wins
+        
+        winner = p1_name if p_win > p_loss else p2_name
+        confidence = max(p_win, p_loss) * 100
+        
+        # Betting Advice
+        advice = "NO BET"
+        bet_amount = 0
+        bet_on = ""
+        potential_profit = 0
+        
+        ev_win = (p_win * p1_odds) - 1
+        ev_loss = (p_loss * p2_odds) - 1
+        
+        if ev_win > 0 and p_win > THRESHOLD and p1_odds >= MIN_ODDS:
+            advice = "BET"
+            bet_amount = 5
+            bet_on = p1_name
+            potential_profit = bet_amount * (p1_odds - 1)
+        elif ev_loss > 0 and p_loss > THRESHOLD and p2_odds >= MIN_ODDS:
+            advice = "BET"
+            bet_amount = 5
+            bet_on = p2_name
+            potential_profit = bet_amount * (p2_odds - 1)
+            
+        return render_template('result.html', 
+                             winner=winner, 
+                             confidence=f"{confidence:.2f}", 
+                             advice=advice,
+                             bet_amount=bet_amount,
+                             bet_on=bet_on,
+                             potential_profit=f"{potential_profit:.2f}",
+                             odds_url="https://www.oddsportal.com/tennis/")
     
     return render_template('index.html')
 
